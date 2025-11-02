@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 
 interface MenuItem {
   id: string
@@ -16,10 +16,13 @@ interface MenuItem {
 export default function Home() {
   const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchFeaturedItems = async () => {
       try {
+        const supabase = getSupabaseBrowserClient()
+
         const { data, error } = await supabase
           .from('menu_items')
           .select('*')
@@ -29,6 +32,7 @@ export default function Home() {
         setFeaturedItems(data || [])
       } catch (err) {
         console.error('Failed to fetch menu items:', err)
+        setFetchError('Failed to load featured items.')
       } finally {
         setLoading(false)
       }
@@ -46,7 +50,7 @@ export default function Home() {
           backgroundImage: 'url(/images/group-items/group_images_4.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundAttachment: 'fixed'
+          backgroundAttachment: 'fixed',
         }}
       >
         <div className="hero-overlay"></div>
@@ -57,50 +61,75 @@ export default function Home() {
           </Link>
         </div>
       </section>
-        
+
+      {/* Maybe show featured items */}
+      <section className="section-container" style={{ padding: '3rem 1.5rem' }}>
+        <h2 className="section-title">Featured</h2>
+        {loading ? (
+          <p>Loading featured items...</p>
+        ) : fetchError ? (
+          <p>{fetchError}</p>
+        ) : featuredItems.length > 0 ? (
+          <div className="featured-grid">
+            {featuredItems.map((item) => (
+              <div key={item.id} className="featured-card">
+                {item.image_url && (
+                    <img src={item.image_url} alt={item.name} className="featured-img" />
+                )}
+                <h3>{item.name}</h3>
+                <p>{item.description}</p>
+                <p>${item.price.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No featured items available.</p>
+        )}
+      </section>
+
       {/* Introduction Section */}
       <section className="introduction-section">
         <div className="section-container">
           <div className="introduction-content">
             <p className="body_large">
-              Roll Over Kimbap began to serve busy, modern eaters who will not give up great taste or health.
+              Roll Over Kimbap began to serve busy, modern eaters who will not
+              give up great taste or health.
               <br />
               <br />
-              Kimbap is Korean comfort food. Each ingredient is prepared with care, and in one bite they come together in a harmony you never forget. It is portable, just the right size, and beautiful to look at.
+              Kimbap is Korean comfort food. Each ingredient is prepared with
+              care, and in one bite they come together in a harmony you never
+              forget. It is portable, just the right size, and beautiful to look
+              at.
             </p>
           </div>
         </div>
       </section>
+
       {/* Service Section */}
       <section className="service-section">
         <div className="section-container">
           <div className="service-content">
             <div className="service-text">
-              <p className="body_medium">
-                Pickup Order
-              </p>
+              <p className="body_medium">Pickup Order</p>
               <p>
                 Send us a DM by the day before with your order and pickup spot.
-                We'll be there with your favorite kimbap, freshly made that morning.
+                We&apos;ll be there with your favorite kimbap, freshly made that
+                morning.
               </p>
             </div>
             <div className="service-text">
-              <p className="body_medium">
-                Group Order
-              </p>
+              <p className="body_medium">Group Order</p>
               <p>
-                For order of 12 rolls or more, we take a limited number of delivery orders each day.
-                DM us early to secure your spot!
+                For order of 12 rolls or more, we take a limited number of
+                delivery orders each day. DM us early to secure your spot!
               </p>
             </div>
             <div className="service-text">
-              <p className="body_medium">
-                Catering
-              </p>
+              <p className="body_medium">Catering</p>
               <p>
-                Hosting a special day or gathering with friends?
-                We prepare kimbap and side dishes that pair perfectly together,
-                making your event both delicious and memorable.
+                Hosting a special day or gathering with friends? We prepare
+                kimbap and side dishes that pair perfectly together, making your
+                event both delicious and memorable.
               </p>
             </div>
           </div>
@@ -112,23 +141,53 @@ export default function Home() {
         <div className="section-container">
           <h2>Events</h2>
           <div className="events-list">
-            <div className="event-item">2025.11.14 Kimbap X Wine Society: Diner Classic Kimbap</div>
-            <div className="event-item">2025.11.07 Popup with Rockaway Brewing Company</div>
-            <div className="event-item">2025.10.25 Popup with Kato Sake Works</div>
-            <div className="event-item">2025.10.24 Popup with Rockaway Brewing Company</div>
-            <div className="event-item">2025.10.19 Jersey City Chuseok Festival</div>
-            <div className="event-item">2025.10.04 Popup with Rockaway Brewing Company</div>
-            <div className="event-item">2025.10.02-03 Popup with Hana Makgeolli</div>
-            <div className="event-item">2025.09.26 Kimbap X Wine Society: Reimaged Kimbap</div>
-            <div className="event-item">2025.09.19 Popup with Rockaway Brewing Company</div>
-            <div className="event-item">2025.09.14 Popup with King's Street Coffee</div>
-            <div className="event-item">2025.09.06 - 2025.10.18 Smorgasburg</div>
-            <div className="event-item">2025.08.22–23 Popup with Hana Makgeolli</div>
+            <div className="event-item">
+              2025.11.14 Kimbap X Wine Society: Diner Classic Kimbap
+            </div>
+            <div className="event-item">
+              2025.11.07 Popup with Rockaway Brewing Company
+            </div>
+            <div className="event-item">
+              2025.10.25 Popup with Kato Sake Works
+            </div>
+            <div className="event-item">
+              2025.10.24 Popup with Rockaway Brewing Company
+            </div>
+            <div className="event-item">
+              2025.10.19 Jersey City Chuseok Festival
+            </div>
+            <div className="event-item">
+              2025.10.04 Popup with Rockaway Brewing Company
+            </div>
+            <div className="event-item">
+              2025.10.02-03 Popup with Hana Makgeolli
+            </div>
+            <div className="event-item">
+              2025.09.26 Kimbap X Wine Society: Reimaged Kimbap
+            </div>
+            <div className="event-item">
+              2025.09.19 Popup with Rockaway Brewing Company
+            </div>
+            <div className="event-item">
+              2025.09.14 Popup with King&apos;s Street Coffee
+            </div>
+            <div className="event-item">
+              2025.09.06 - 2025.10.18 Smorgasburg
+            </div>
+            <div className="event-item">
+              2025.08.22–23 Popup with Hana Makgeolli
+            </div>
             <div className="event-item">2025.08.10 Asian Festival</div>
-            <div className="event-item">2025.08.08 Popup with Rockaway Brewing Company</div>
-            <div className="event-item">2025.07.31 Popup with Hana Makgeolli</div>
+            <div className="event-item">
+              2025.08.08 Popup with Rockaway Brewing Company
+            </div>
+            <div className="event-item">
+              2025.07.31 Popup with Hana Makgeolli
+            </div>
             <div className="event-item">2025.07.07 Kopino Festival</div>
-            <div className="event-item">2025.06.27 Popup with Rockaway Brewing Company</div>
+            <div className="event-item">
+              2025.06.27 Popup with Rockaway Brewing Company
+            </div>
           </div>
         </div>
       </section>

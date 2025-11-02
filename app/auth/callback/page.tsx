@@ -1,8 +1,9 @@
+// /app/auth/callback/page.tsx
 'use client'
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 
 export default function AuthCallback() {
   const router = useRouter()
@@ -10,10 +11,12 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // URL에서 코드 추출
-        const { data, error } = await supabase.auth.exchangeCodeForSession(
+        const supabase = getSupabaseBrowserClient()
+
+        const code =
           new URLSearchParams(window.location.search).get('code') || ''
-        )
+
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (error) {
           console.error('Auth callback error:', error)
@@ -21,7 +24,6 @@ export default function AuthCallback() {
           return
         }
 
-        // 성공 - Home으로 이동
         router.push('/')
       } catch (err) {
         console.error('Callback error:', err)
@@ -35,7 +37,7 @@ export default function AuthCallback() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <p>로그인 중...</p>
+        <p>Signing you in...</p>
       </div>
     </div>
   )

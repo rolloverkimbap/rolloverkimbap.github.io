@@ -1,12 +1,20 @@
-import { createClient } from '@supabase/supabase-js'
+// lib/supabase.ts
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local'
-  )
+let supabase: SupabaseClient | null = null
+
+if (url && anonKey) {
+  supabase = createClient(url, anonKey)
+} else {
+  // 빌드/서버 환경에서 env가 없을 때 여기로 온다
+  if (typeof window === 'undefined') {
+    console.warn(
+      'Supabase env vars are missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel.'
+    )
+  }
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export { supabase }

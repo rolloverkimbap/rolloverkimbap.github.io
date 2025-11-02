@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { getTagIcon } from '@/lib/iconUtils'
 
 interface MenuItem {
@@ -18,26 +18,30 @@ export default function Menu() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
+        const supabase = getSupabaseBrowserClient()
+
         const { data, error } = await supabase
           .from('menu_items')
           .select('*')
           .order('category', { ascending: true })
 
-        if (error) throw error 
+        if (error) throw error
 
         setMenuItems(data || [])
 
-        // Extract unique categories
         const uniqueCategories = Array.from(
           new Set((data || []).map((item) => item.category))
         ) as string[]
+
         setCategories(uniqueCategories)
       } catch (err) {
         console.error('Failed to fetch menu items:', err)
+        setFetchError('Failed to load menu items.')
       } finally {
         setLoading(false)
       }
@@ -46,23 +50,21 @@ export default function Menu() {
     fetchMenuItems()
   }, [])
 
-
   return (
     <div className="menu-page">
-      {/* Page Header */}
       <div className="section-container">
         <section className="menu-header">
           <h1>Menu</h1>
         </section>
       </div>
 
-      {/* Menu Content */}
       <section className="menu-content">
         {loading ? (
           <div className="loading">Loading menu...</div>
+        ) : fetchError ? (
+          <div className="error-message">{fetchError}</div>
         ) : categories.length > 0 ? (
           <>
-            {/* Category Sections */}
             {categories.map((category) => {
               const categoryItems = menuItems.filter(
                 (item) => item.category === category
@@ -70,12 +72,10 @@ export default function Menu() {
               return (
                 <div key={category} className="menu-category-section">
                   <div className="section-container">
-                    {/* Category Title with Divider */}
                     <div className="category-header">
                       <h2>{category}</h2>
                     </div>
 
-                    {/* Menu Items Grid */}
                     {categoryItems.length > 0 ? (
                       <div className="menu-grid">
                         {categoryItems.map((item) => (
@@ -125,22 +125,6 @@ export default function Menu() {
         ) : (
           <div className="no-items">No menu items available.</div>
         )}
-      </section>
-
-      {/* Info Section */}
-      <section className="menu-info">
-        <div className="section-container">
-          <h2>Ready to Order?</h2>
-          <p>Visit us or order online for pickup or delivery</p>
-          <div className="info-buttons">
-            <a href="/order-online" className="btn btn-primary">
-              Order Online
-            </a>
-            <a href="/contact" className="btn btn-secondary">
-              Contact Us
-            </a>
-          </div>
-        </div>
       </section>
     </div>
   )

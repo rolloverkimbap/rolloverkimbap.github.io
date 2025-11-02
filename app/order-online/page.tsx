@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 import { getTagIcon } from '@/lib/iconUtils'
 
 interface MenuItem {
@@ -17,11 +17,14 @@ interface MenuItem {
 export default function OrderOnline() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [cart, setCart] = useState<{ [key: string]: number }>({})
 
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
+        const supabase = getSupabaseBrowserClient()
+
         const { data, error } = await supabase
           .from('menu_items')
           .select('*')
@@ -32,6 +35,7 @@ export default function OrderOnline() {
         setMenuItems(data || [])
       } catch (err) {
         console.error('Failed to fetch menu items:', err)
+        setFetchError('Failed to load menu items.')
       } finally {
         setLoading(false)
       }
@@ -41,14 +45,14 @@ export default function OrderOnline() {
   }, [])
 
   const addToCart = (itemId: string) => {
-    setCart(prev => ({
+    setCart((prev) => ({
       ...prev,
       [itemId]: (prev[itemId] || 0) + 1,
     }))
   }
 
   const removeFromCart = (itemId: string) => {
-    setCart(prev => {
+    setCart((prev) => {
       const newCart = { ...prev }
       if (newCart[itemId] > 1) {
         newCart[itemId]--
@@ -61,7 +65,7 @@ export default function OrderOnline() {
 
   const getTotalPrice = () => {
     return Object.entries(cart).reduce((total, [itemId, quantity]) => {
-      const item = menuItems.find(m => m.id === itemId)
+      const item = menuItems.find((m) => m.id === itemId)
       return total + (item?.price || 0) * quantity
     }, 0)
   }
@@ -82,6 +86,8 @@ export default function OrderOnline() {
           <div className="order-menu">
             {loading ? (
               <div className="loading">Loading menu...</div>
+            ) : fetchError ? (
+              <div className="error-message">{fetchError}</div>
             ) : menuItems.length > 0 ? (
               <div className="menu-items-grid">
                 {menuItems.map((item) => (
@@ -123,7 +129,9 @@ export default function OrderOnline() {
                             >
                               −
                             </button>
-                            <span className="qty-display">{cart[item.id]}</span>
+                            <span className="qty-display">
+                              {cart[item.id]}
+                            </span>
                             <button
                               onClick={() => addToCart(item.id)}
                               className="qty-btn"
@@ -162,7 +170,7 @@ export default function OrderOnline() {
                 <>
                   <div className="cart-items">
                     {Object.entries(cart).map(([itemId, quantity]) => {
-                      const item = menuItems.find(m => m.id === itemId)
+                      const item = menuItems.find((m) => m.id === itemId)
                       return item ? (
                         <div key={itemId} className="cart-item">
                           <div className="cart-item-info">

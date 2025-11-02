@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseBrowserClient } from '@/lib/supabase'
 
 interface FormData {
   first_name: string
@@ -30,7 +30,6 @@ export default function Contact() {
   ) => {
     const { name, value } = e.target
 
-    // Message 필드의 경우 길이 제한
     if (name === 'message') {
       if (value.length > MAX_MESSAGE_LENGTH) {
         return
@@ -51,18 +50,25 @@ export default function Contact() {
     setSuccess(false)
 
     try {
-      // Validation - All fields are required
-      if (!formData.first_name || !formData.last_name || !formData.email || !formData.message) {
+      // 1) client 생성 (브라우저에서만)
+      const supabase = getSupabaseBrowserClient()
+
+      // 2) basic validation
+      if (
+        !formData.first_name ||
+        !formData.last_name ||
+        !formData.email ||
+        !formData.message
+      ) {
         throw new Error('All fields are required.')
       }
 
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(formData.email)) {
         throw new Error('Please enter a valid email address.')
       }
 
-      // Save data to Supabase
+      // 3) insert
       const { error: dbError } = await supabase
         .from('contacts')
         .insert([
@@ -84,7 +90,7 @@ export default function Contact() {
         throw new Error(dbError.message)
       }
 
-      // Success
+      // 4) success
       setSuccess(true)
       setFormData({
         first_name: '',
@@ -92,11 +98,12 @@ export default function Contact() {
         email: '',
         message: '',
       })
+      setMessageLength(0)
 
-      // 3초 후 성공 메시지 사라짐
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred.'
+      const errorMessage =
+        err instanceof Error ? err.message : 'An error occurred.'
       setError(errorMessage)
       console.error('Error:', err)
     } finally {
@@ -111,7 +118,7 @@ export default function Contact() {
           <p>
             We love partnering on pop-ups and events.
             <br />
-            Tell us about your idea, and we'll get back with availability, menu, and a quote.
+            Tell us about your idea, and we&apos;ll get back with availability, menu, and a quote.
           </p>
         </div>
       </div>
@@ -122,11 +129,10 @@ export default function Contact() {
         </div>
 
         <div className="contact-right-form">
-        <div className="contact-form-container">
-            {/* Headers removed to reduce section height */}
+          <div className="contact-form-container">
             {success && (
               <div className="success-message">
-                ✅ Thank you! Your message has been sent successfully. We'll be in touch soon!
+                ✅ Thank you! Your message has been sent successfully. We&apos;ll be in touch soon!
               </div>
             )}
 
@@ -181,7 +187,9 @@ export default function Contact() {
               <div className="form-group">
                 <div className="message-label-row">
                   <label htmlFor="message">Message *</label>
-                  <span className="char-count">{messageLength}/{MAX_MESSAGE_LENGTH}</span>
+                  <span className="char-count">
+                    {messageLength}/{MAX_MESSAGE_LENGTH}
+                  </span>
                 </div>
                 <textarea
                   id="message"
@@ -202,15 +210,15 @@ export default function Contact() {
                 {loading ? 'Sending...' : 'Send Message'}
               </button>
             </form>
+          </div>
         </div>
-      </div>
       </div>
 
       <div className="location-map-section">
         <iframe
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d8178.963432220211!2d-73.95772583804423!3d40.73524107916177!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c2593be62b034f%3A0x4934b645b2ac3f99!2s394%20McGuinness%20Blvd%2C%20Brooklyn%2C%20NY%2011222%20%EB%AF%B8%EA%B5%AD!5e0!3m2!1sko!2sca!4v1762038341443!5m2!1sko!2sca"
           style={{ border: 0, width: '100%', height: '500px' }}
-          allowFullScreen={true}
+          allowFullScreen
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         />
