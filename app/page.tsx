@@ -62,31 +62,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Maybe show featured items */}
-      <section className="section-container" style={{ padding: '3rem 1.5rem' }}>
-        <h2 className="section-title">Featured</h2>
-        {loading ? (
-          <p>Loading featured items...</p>
-        ) : fetchError ? (
-          <p>{fetchError}</p>
-        ) : featuredItems.length > 0 ? (
-          <div className="featured-grid">
-            {featuredItems.map((item) => (
-              <div key={item.id} className="featured-card">
-                {item.image_url && (
-                    <img src={item.image_url} alt={item.name} className="featured-img" />
-                )}
-                <h3>{item.name}</h3>
-                <p>{item.description}</p>
-                <p>${item.price.toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No featured items available.</p>
-        )}
-      </section>
-
       {/* Introduction Section */}
       <section className="introduction-section">
         <div className="section-container">
